@@ -13,6 +13,6 @@ export const PLACEMENT = Symbol.for('PLACEMENT');
 //更新节点
 export const UPDATE = Symbol.for('UPDATE');
 //删除节点
-export const DELETE = Symbol.for('DELETE');
+export const DELETION = Symbol.for('DELETION');
 
 //文本节点的话 fiber {tage: TAG_TEXT, type: ELEMENT_TEXT}
