@@ -27,4 +27,4 @@ class ClassCounter extends React.Component {
 	}
 }
 
-ReactDOM.render(<ClassCounter />, document.querySelector('#root'));
+ReactDOM.render(<ClassCounter name="tony" />, document.getElementById('root'));

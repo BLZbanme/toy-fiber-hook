@@ -121,6 +121,7 @@ function updateClassComponent(currentFiber) {
     }
     //给组件的实例的state赋值
     currentFiber.stateNode.state = currentFiber.updateQueue.forceUpdate(currentFiber.stateNode.state);
+    debugger
     let newElement = currentFiber.stateNode.render();
     const newChildren = [newElement];
     reconcileChildren(currentFiber, newChildren);
@@ -146,7 +147,9 @@ function createDOM(currentFiber) {
 }
 
 function updateDOM(stateNode, oldProps, newProps) {
-    setProps(stateNode, oldProps, newProps);
+    if (stateNode.setAttribute) {
+        setProps(stateNode, oldProps, newProps);
+    } 
 }
 
 function updateHostText(currentFiber) {
@@ -176,7 +179,7 @@ function reconcileChildren(currentFiber, newChildren) {
         const sameType = oldFiber && newChild && oldFiber.type === newChild.type;
 
         let tag;
-        if (newChild && typeof newChildren.type === 'function' && newChild.type.prototype.isReactComponent) {
+        if (typeof newChild.type === 'function' && newChild.type.prototype.isReactComponent) {
             tag = TAG_CLASS;
         }
         else if (newChild && newChild.type === ELEMENT_TEXT) {
@@ -235,7 +238,6 @@ function reconcileChildren(currentFiber, newChildren) {
             oldFiber = oldFiber.sibling; //oldFiber指针向后移动一次
         }
 
-        
         //最小的儿子是没有弟弟的
         if (newFiber) {
             if (newChildIndex === 0) { //如果当前索引为0，说明这是太子
@@ -267,6 +269,7 @@ function workLoop(deadline) {
 }
 
 function commitRoot() {
+
     deletions.forEach(commitWork); //执行effect list前先把该删除的任务删除
     let currentFiber = workInProgressRoot.firstEffect;
     while (currentFiber) {
@@ -296,7 +299,9 @@ function commitWork(currentFiber) {
     }
     else if (currentFiber.effectTag === DELETION) {
         commitDeletion(currentFiber, domReturn);
-        domReturn.removeChild(currentFiber.stateNode);
+        return;
+        // domReturn.removeChild(currentFiber.stateNode);
+        
     }
     else if (currentFiber.effectTag === UPDATE) {
         if (currentFiber.type === ELEMENT_TEXT) {
@@ -305,6 +310,7 @@ function commitWork(currentFiber) {
             }
         }
         else {
+            
             updateDOM(currentFiber.stateNode, currentFiber.alternate.props, currentFiber.props);
         }
     }

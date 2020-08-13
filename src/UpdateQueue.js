@@ -29,8 +29,9 @@ export class UpdateQueue {
                 ...state,
                 ...nextState
             }
+            currentUpdate = currentUpdate.nextUpdate;
         }
-        this.firstUpdate= this.lastUpdate = null;
+        this.firstUpdate = this.lastUpdate = null;
         return state;
     }
 }

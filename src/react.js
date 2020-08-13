@@ -40,7 +40,6 @@ class Component {
         //updateQueue其实是放在此类组件对应的fiber节点的 internalFiber
         this.internalFiber.updateQueue.enqueueUpdate(update);
         // this.updateQueue.enqueueUpdate(update);
-        debugger
         scheduleRoot(); //从根节点开始调度
     }
 }
