@@ -10,7 +10,7 @@ class ClassCounter extends React.Component {
 	}
 
 	onClick = () => {
-		this.state(state => ({ number: state.number + 1}));
+		this.setState(state => ({ number: state.number + 1}));
 	}
 
 	render() {
