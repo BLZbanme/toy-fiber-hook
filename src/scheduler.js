@@ -1,6 +1,6 @@
-import { ELEMENT_TEXT, TAG_HOST, TAG_TEXT, TAG_ROOT, TAG_CLASS, PLACEMENT, UPDATE, DELETION } from './constants';
+import { ELEMENT_TEXT, TAG_HOST, TAG_TEXT, TAG_ROOT, TAG_CLASS, PLACEMENT, UPDATE, DELETION, TAG_FUNCTION_COMPONENT } from './constants';
 import { setProps } from './utils';
-import { UpdateQueue } from './UpdateQueue';
+import { UpdateQueue, Update } from './UpdateQueue';
 
 /**
  * 从根节点开始渲染和调度
@@ -16,6 +16,9 @@ let nextUnitOfWork = null; //下一个工作单元
 let workInProgressRoot = null; //RootFiber应用的根
 let currentRoot = null; //渲染成功之后当前根数组
 let deletions = []; //删除的节点我们并不放在effect list里，所以需要单独记录并执行
+let workInProgressFiber =null; //正在工作中的fiber
+let hookIndex = 0; //hook索引
+
 export function scheduleRoot(rootFiber) { //{ tag: TAG_ROOT, stateNode: container, props: { children: [element] }}
     if (currentRoot && currentRoot.alternate) { //第二次之后的更新
         workInProgressRoot = currentRoot.alternate; //第一次渲染出来的那个fiber tree
@@ -110,6 +113,17 @@ function beginWork(currentFiber) {
     else if (currentFiber.tag === TAG_CLASS) {
         updateClassComponent(currentFiber);
     }
+    else if (currentFiber.tag === TAG_FUNCTION_COMPONENT) {
+        updateFunctionComponent(currentFiber);
+    }
+}
+
+function updateFunctionComponent(currentFiber) {
+    workInProgressFiber = currentFiber;
+    hookIndex = 0;
+    workInProgressFiber.hooks = [];
+    const newChildren = [currentFiber.type(currentFiber.props)];
+    reconcileChildren(currentFiber, newChildren);
 }
 
 function updateClassComponent(currentFiber) {
@@ -121,7 +135,6 @@ function updateClassComponent(currentFiber) {
     }
     //给组件的实例的state赋值
     currentFiber.stateNode.state = currentFiber.updateQueue.forceUpdate(currentFiber.stateNode.state);
-    debugger
     let newElement = currentFiber.stateNode.render();
     const newChildren = [newElement];
     reconcileChildren(currentFiber, newChildren);
@@ -147,7 +160,7 @@ function createDOM(currentFiber) {
 }
 
 function updateDOM(stateNode, oldProps, newProps) {
-    if (stateNode.setAttribute) {
+    if (stateNode && stateNode.setAttribute) {
         setProps(stateNode, oldProps, newProps);
     } 
 }
@@ -179,8 +192,11 @@ function reconcileChildren(currentFiber, newChildren) {
         const sameType = oldFiber && newChild && oldFiber.type === newChild.type;
 
         let tag;
-        if (typeof newChild.type === 'function' && newChild.type.prototype.isReactComponent) {
+        if (newChild && typeof newChild.type === 'function' && newChild.type.prototype.isReactComponent) {
             tag = TAG_CLASS;
+        }
+        else if (newChild && typeof newChild.type === 'function') {
+            tag = TAG_FUNCTION_COMPONENT;
         }
         else if (newChild && newChild.type === ELEMENT_TEXT) {
             tag = TAG_TEXT; //这是一个文本节点
@@ -327,6 +343,38 @@ function commitDeletion(currentFiber, domReturn) {
     else {
         commitDeletion(currentFiber.child, domReturn);
     }
+}
+
+/**
+ * 
+ * @param {*} reducer 
+ * @param {*} initialValue 
+ */
+export function useReducer(reducer, initialValue) {
+    let newHook = workInProgressFiber.alternate && workInProgressFiber.alternate.hooks
+       && workInProgressFiber.alternate.hooks[hookIndex];
+    if (newHook) {
+        //第二次渲染 TODO
+        newHook.state = newHook.updateQueue.forceUpdate(newHook.state);
+    }
+    else {
+        newHook = {
+            state: initialValue,
+            updateQueue: new UpdateQueue()
+        }
+    }
+
+    // const dispatch = null;
+    const dispatch = action => {
+        let payload = reducer ? reducer(newHook.state, action) : action;
+        newHook.updateQueue.enqueueUpdate(
+            new Update(payload)
+        );
+        scheduleRoot();
+    }
+
+    workInProgressFiber.hooks[hookIndex] = newHook;
+    return [newHook.state, dispatch];
 }
 
 //react 告诉浏览器，我现在有任务，请你在闲的时候

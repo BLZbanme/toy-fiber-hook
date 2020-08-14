@@ -1,6 +1,7 @@
 import React from './react';
 import ReactDOM from './react-dom';
 
+//useState 是一个语法糖，基于useReducer
 class ClassCounter extends React.Component {
 	constructor(props) {
 		super(props);
@@ -27,4 +28,42 @@ class ClassCounter extends React.Component {
 	}
 }
 
-ReactDOM.render(<ClassCounter name="tony" />, document.getElementById('root'));
+const ADD = 'ADD';
+
+function reducer(state, action) {
+	switch (action.type) {
+		case 'ADD':
+			return { count: state.count + 1};
+		default:
+			return state;
+	}
+}
+
+function FunctionCounter(props) {
+	const [numberState, setNumberState] = React.useState({ number: 0 });
+	const [countState, dispatch] = React.useReducer(reducer, { count: 0 });
+	
+	return (
+		<div>
+			<div id='counter1'>
+				<span>
+					{ countState.count }
+				</span>
+				<button onClick = {() => dispatch({ type: ADD })}>
+					加1
+				</button>
+			</div>
+			<div id='counter2'>
+				<span>
+					{ countState.count }
+				</span>
+				<button onClick = {() => dispatch({ type: ADD })}>
+					加1
+				</button>
+			</div>
+		</div>
+		
+	)
+}
+
+ReactDOM.render(<FunctionCounter name="计数器" />, document.getElementById('root'));
