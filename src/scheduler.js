@@ -373,8 +373,12 @@ export function useReducer(reducer, initialValue) {
         scheduleRoot();
     }
 
-    workInProgressFiber.hooks[hookIndex] = newHook;
+    workInProgressFiber.hooks[hookIndex++] = newHook;
     return [newHook.state, dispatch];
+}
+
+export function useState(initialValue) {
+    return useReducer(null, initialValue);
 }
 
 //react 告诉浏览器，我现在有任务，请你在闲的时候
